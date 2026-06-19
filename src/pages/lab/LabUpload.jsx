@@ -13,23 +13,32 @@ export default function LabUpload() {
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
 
-  const handleUpload = async (e) => {
-    e.preventDefault()
-    if (!file || !parchi) return
-    setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('parchiNo', parchi)
-    formData.append('reportType', reportType)
-    try {
-      await reportAPI.upload(formData)
-    } catch { /* demo fallback */ }
+ const handleUpload = async (e) => {
+  e.preventDefault()
+  if (!file || !parchi) return
+  setUploading(true)
+  
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('parchiNo', parchi)
+  formData.append('reportType', reportType)
+  
+  try {
+    await reportAPI.upload(formData)
+    // ✅ Sirf success pe yeh chalega
     setUploadDone(true)
-    setFile(null); setParchi(''); setReportType('')
+    setFile(null)
+    setParchi('')
+    setReportType('')
     toast.success('Report uploaded successfully!')
     setTimeout(() => setUploadDone(false), 3000)
+  } catch (err) {
+    // ✅ Error user ko dikhao
+    toast.error(err?.response?.data?.message || 'Upload failed, try again')
+  } finally {
     setUploading(false)
   }
+}
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -65,7 +74,8 @@ export default function LabUpload() {
                 }`}
                 onClick={() => document.getElementById('labFileInput').click()}
               >
-                <input id="labFileInput" type="file" accept=".pdf,image/*" className="hidden"
+                <input id="labFileInput" type="file"  
+  accept=".pdf,image/*,.ppt,.pptx,.doc,.docx,.xls,.xlsx"  className="hidden"
                   onChange={e => setFile(e.target.files[0])} />
                 {file ? (
                   <div>
