@@ -1,7 +1,5 @@
-import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { gsap } from 'gsap'
 import {
   FiSearch, FiCalendar, FiAlertTriangle, FiFileText,
   FiPhone, FiChevronRight, FiHeart, FiShield, FiActivity
@@ -36,22 +34,13 @@ const itemVariants = {
 
 export default function PatientHome() {
   const { user } = useAuth()
-  const heroRef = useRef(null)
-
-  useEffect(() => {
-    if (heroRef.current) {
-      gsap.from(heroRef.current.querySelector('.hero-text'), {
-        y: 30, opacity: 0, duration: 0.8, ease: 'power3.out'
-      })
-    }
-  }, [])
 
   return (
     <div className="min-h-screen bg-hospital-bg">
       <Navbar showMenu={false} />
 
       {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden">
+      <section className="relative overflow-hidden">
         <div className="bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900">
           <div className="max-w-4xl mx-auto px-5 py-14 text-center">
             <motion.div className="hero-text" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
