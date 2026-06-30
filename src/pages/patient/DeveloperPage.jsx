@@ -147,10 +147,30 @@ const team = [
     gradient: "from-indigo-400 to-blue-500",
     bio: "Cross-platform mobile apps using Flutter & native Android (Kotlin).",
     languages: [
-      
       { icon: SiReact, label: "React" },
       { icon: SiNextdotjs, label: "Next.js" },
       { icon: SiTailwindcss, label: "Tailwind" },
+      { icon: SiGit, label: "Git" },
+    ],
+    social: {
+      github: "https://github.com",
+      linkedin: "https://linkedin.com",
+      instagram: "https://instagram.com",
+    },
+  },
+  {
+    name: "Mayank Maharshi",
+    role: "Full Stack Developer",
+    url: null,
+    initials: "MM",
+    gradient: "from-violet-500 to-purple-600",
+    bio: "Full-stack developer passionate about building end-to-end web solutions with modern technologies.",
+    languages: [
+      { icon: SiReact, label: "React" },
+      { icon: SiNodedotjs, label: "Node" },
+      { icon: SiMongodb, label: "Mongo" },
+      { icon: SiTailwindcss, label: "Tailwind" },
+      { icon: SiJavascript, label: "JS" },
       { icon: SiGit, label: "Git" },
     ],
     social: {
