@@ -32,15 +32,33 @@ export default function PatientReports() {
     try {
       const res = await reportAPI.getByParchi(parchiNo.trim())
       setReport(res)
-    } catch {
-      // demo mock
-      if (parchiNo.toUpperCase().includes('P')) {
-        setReport(MOCK_REPORT)
+    } catch (err) {
+      const msg = err?.message || ''
+      if (msg.includes('nahi mila') || msg.includes('404') || msg.toLowerCase().includes('not found')) {
+        setError('No report found for this Parchi number. Please check and try again.')
+      } else if (!msg || msg === 'Network error') {
+        // demo mock when backend offline
+        if (parchiNo.toUpperCase().includes('P')) {
+          setReport(MOCK_REPORT)
+        } else {
+          setError('No report found for this Parchi number. Please check and try again.')
+        }
       } else {
         setError('No report found for this Parchi number. Please check and try again.')
       }
     }
     setLoading(false)
+  }
+
+  const handleDownload = async (report, fileIdx) => {
+    try {
+      const res = await reportAPI.download(report._id, { fileIndex: fileIdx })
+      window.open(res.url, '_blank')
+    } catch {
+      // fallback: open direct URL
+      const file = report.files?.[fileIdx]
+      if (file?.url) window.open(file.url, '_blank')
+    }
   }
 
   return (
@@ -87,7 +105,7 @@ export default function PatientReports() {
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-lg">
-                        {report.patientName[0]}
+                        {report.patientName?.[0] || '?'}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -100,37 +118,39 @@ export default function PatientReports() {
                     <span className="badge-blue text-xs">{report.parchiNo}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-gray-500">Doctor</span><p className="font-semibold text-gray-800">{report.doctorName}</p></div>
-                    <div><span className="text-gray-500">Department</span><p className="font-semibold text-gray-800">{report.department}</p></div>
-                    <div><span className="text-gray-500">Date</span><p className="font-semibold text-gray-800">{report.date}</p></div>
-                    <div><span className="text-gray-500">Diagnosis</span><p className="font-semibold text-gray-800">{report.diagnosis}</p></div>
+                    <div><span className="text-gray-500">Doctor</span><p className="font-semibold text-gray-800">{report.doctorName || '—'}</p></div>
+                    <div><span className="text-gray-500">Department</span><p className="font-semibold text-gray-800">{report.department || '—'}</p></div>
+                    <div><span className="text-gray-500">Date</span><p className="font-semibold text-gray-800">{report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}</p></div>
+                    <div><span className="text-gray-500">Diagnosis</span><p className="font-semibold text-gray-800">{report.diagnosis || '—'}</p></div>
                   </div>
                 </div>
 
                 {/* Report Files */}
                 <div className="card">
                   <h3 className="section-title mb-4 flex items-center gap-2">
-                    <FiFileText className="text-primary-500" /> Available Reports ({report.reports?.length})
+                    <FiFileText className="text-primary-500" /> Available Reports ({report.files?.length ?? 0})
                   </h3>
                   <div className="space-y-3">
-                    {report.reports?.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-primary-50 transition-colors group">
+                    {report.files?.map((r, idx) => (
+                      <div key={r._id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-primary-50 transition-colors group">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 font-bold text-xs">
-                            {r.type.toUpperCase()}
+                            {(r.fileType || r.type || r.name || 'FILE').substring(0, 3).toUpperCase()}
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-gray-800">{r.name}</p>
                             <p className="text-xs text-gray-500 flex items-center gap-2">
-                              <FiClock size={10} /> {r.uploadedAt} · {r.size}
+                              <FiClock size={10} /> {r.uploadedAt ? new Date(r.uploadedAt).toLocaleString() : ''} · {r.size}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-100 rounded-lg transition-colors">
+                          <button onClick={() => window.open(r.url, '_blank')}
+                            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-100 rounded-lg transition-colors" title="View">
                             <FiEye size={15} />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                          <button onClick={() => handleDownload(report, idx)}
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Download">
                             <FiDownload size={15} />
                           </button>
                         </div>

@@ -55,7 +55,7 @@ export const reportAPI = {
   getByParchi: (parchiNo) => API.get(`/reports/parchi/${parchiNo}`),
   getAll: (params) => API.get('/reports', { params }),
   getAnalytics: (params) => API.get('/reports/analytics', { params }),
-  download: (id) => API.get(`/reports/${id}/download`),
+  download: (id, params) => API.get(`/reports/${id}/download`, { params }),
 }
 
 // ─── Doctors ────────────────────────────────────────────

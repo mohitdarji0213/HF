@@ -52,9 +52,8 @@ export default function LabDashboard() {
       setUploadDone(true)
       setFile(null); setParchi(''); setReportType('')
       setTimeout(() => setUploadDone(false), 3000)
-    } catch {
-      setUploadDone(true)
-      setTimeout(() => setUploadDone(false), 3000)
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || 'Upload failed, try again')
     }
     setUploading(false)
   }

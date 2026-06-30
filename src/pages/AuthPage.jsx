@@ -114,7 +114,10 @@ export default function AuthPage({ mode = "login" }) {
         const decoded = jwtDecode(res.token);
         navigate(ROLE_REDIRECT[decoded.role] || "/home");
       } else {
-        const res = await authAPI.register(form);
+        const res = await authAPI.register({
+          ...form,
+          experience: form.experience !== '' ? parseInt(form.experience) : 0,
+        });
         login(res.token);
         toast.success("Account created successfully!");
         navigate(ROLE_REDIRECT[form.role] || "/home");
