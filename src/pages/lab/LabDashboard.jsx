@@ -1,31 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Outlet, useLocation } from 'react-router-dom'
-import { FiHome, FiUpload, FiFileText, FiCalendar, FiFilter, FiDownload, FiCheckCircle } from 'react-icons/fi'
+import { FiHome, FiUpload, FiFileText, FiDownload, FiCheckCircle } from 'react-icons/fi'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Navbar from '../../components/common/Navbar'
 import Sidebar from '../../components/common/Sidebar'
-import StatCard from '../../components/common/StatCard'
 import { reportAPI } from '../../services/api'
+import { SkeletonStatCard, SkeletonTableRow } from '../../components/common/Skeleton'
 import toast from 'react-hot-toast'
 import { exportToExcel } from '../../utils/exportExcel'
+import { DEMO_MODE, DEMO_ANALYTICS, DEMO_WEEK_DATA, DEMO_REPORT_HISTORY } from '../../utils/demo'
 
 const SIDEBAR_LINKS = [
   { to: '/lab', icon: <FiHome />, label: 'Dashboard' },
   { to: '/lab/upload', icon: <FiUpload />, label: 'Upload Report' },
   { to: '/lab/analytics', icon: <FiFileText />, label: 'Report Analytics' },
-]
-
-const UPLOAD_HISTORY = [
-  { parchi: 'P2024-001234', patient: 'Ramesh Kumar', type: 'X-Ray', date: '2024-11-15 10:30', size: '2.4 MB', status: 'uploaded' },
-  { parchi: 'P2024-001235', patient: 'Meena Sharma', type: 'Blood Test', date: '2024-11-15 11:15', size: '1.1 MB', status: 'uploaded' },
-  { parchi: 'P2024-001236', patient: 'Asha Devi', type: 'MRI Scan', date: '2024-11-14 03:00', size: '8.6 MB', status: 'uploaded' },
-]
-
-const dailyData = [
-  { day: 'Mon', uploads: 12 }, { day: 'Tue', uploads: 18 },
-  { day: 'Wed', uploads: 25 }, { day: 'Thu', uploads: 15 },
-  { day: 'Fri', uploads: 22 }, { day: 'Sat', uploads: 8 },
 ]
 
 export default function LabDashboard() {
@@ -36,8 +25,47 @@ export default function LabDashboard() {
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
   const [filterDays, setFilterDays] = useState('7')
+  const [analytics, setAnalytics] = useState(null)
+  const [history, setHistory] = useState([])
+  const [statsLoading, setStatsLoading] = useState(true)
   const location = useLocation()
   const isBase = location.pathname === '/lab' || location.pathname === '/lab/'
+
+  useEffect(() => {
+    if (!isBase) return
+    const load = async () => {
+      try {
+        const [analyticsRes, reportsRes] = await Promise.all([
+          reportAPI.getAnalytics(),
+          reportAPI.getAll(),
+        ])
+        setAnalytics(analyticsRes)
+        const flat = (Array.isArray(reportsRes) ? reportsRes : []).flatMap(r =>
+          r.files?.map(f => ({
+            parchi: r.parchiNo,
+            patient: r.patientName || '—',
+            type: f.fileType || f.type || '—',
+            date: f.uploadedAt ? new Date(f.uploadedAt).toLocaleString() : '—',
+            size: f.size || '—',
+            status: 'uploaded',
+          })) || []
+        )
+        setHistory(flat)
+      } catch {
+        if (DEMO_MODE) {
+          setAnalytics(DEMO_ANALYTICS)
+          setHistory(DEMO_REPORT_HISTORY.flatMap(r => r.files.map(f => ({
+            parchi: r.parchiNo, patient: r.patientName,
+            type: f.fileType, date: new Date(f.uploadedAt).toLocaleString(),
+            size: f.size, status: 'uploaded',
+          }))))
+        }
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+    load()
+  }, [isBase])
 
   const handleUpload = async (e) => {
     e.preventDefault()
@@ -72,10 +100,24 @@ export default function LabDashboard() {
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={<FiUpload />} label="Today's Uploads" value="23" color="blue" />
-                <StatCard icon={<FiFileText />} label="This Month" value="342" color="teal" />
-                <StatCard icon="📊" label="Pending" value="4" color="orange" />
-                <StatCard icon="📥" label="Total Downloaded" value="2,180" color="blue" />
+                {statsLoading ? [...Array(4)].map((_, i) => <SkeletonStatCard key={i} />) : (<>
+                  <div className="card text-center border-l-4 border-l-blue-500">
+                    <p className="text-2xl font-bold text-blue-700">{analytics?.totalFiles ?? 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">Total Files</p>
+                  </div>
+                  <div className="card text-center border-l-4 border-l-teal-500">
+                    <p className="text-2xl font-bold text-teal-700">{analytics?.totalParchi ?? 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">Total Parchi</p>
+                  </div>
+                  <div className="card text-center border-l-4 border-l-orange-500">
+                    <p className="text-2xl font-bold text-orange-600">{history.length}</p>
+                    <p className="text-sm text-gray-500 mt-1">Uploads</p>
+                  </div>
+                  <div className="card text-center border-l-4 border-l-green-500">
+                    <p className="text-2xl font-bold text-green-600">{analytics?.totalDownloads ?? 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">Downloads</p>
+                  </div>
+                </>)}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -138,15 +180,19 @@ export default function LabDashboard() {
                       <option value="30">Last 30 days</option>
                     </select>
                   </div>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={dailyData} barSize={20}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Bar dataKey="uploads" fill="#3b82f6" radius={4} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {statsLoading ? (
+                    <div className="h-[200px] bg-slate-100 animate-pulse rounded-xl" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={DEMO_WEEK_DATA} barSize={20}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip />
+                        <Bar dataKey="uploads" fill="#3b82f6" radius={4} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
@@ -154,9 +200,11 @@ export default function LabDashboard() {
               <div className="card">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="section-title">Recent Uploads</h3>
-                  <button onClick={() => exportToExcel(UPLOAD_HISTORY, 'Lab_Upload_History')} className="btn-secondary text-xs py-1.5">
-                    <FiDownload size={13} /> Export
-                  </button>
+                  {!statsLoading && history.length > 0 && (
+                    <button onClick={() => exportToExcel(history, 'Lab_Upload_History')} className="btn-secondary text-xs py-1.5">
+                      <FiDownload size={13} /> Export
+                    </button>
+                  )}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -169,16 +217,21 @@ export default function LabDashboard() {
                       <th className="p-3">Status</th>
                     </tr></thead>
                     <tbody>
-                      {UPLOAD_HISTORY.map((r, i) => (
-                        <tr key={i} className="table-row">
-                          <td className="p-3 font-mono text-xs text-primary-600">{r.parchi}</td>
-                          <td className="p-3 font-medium text-gray-800">{r.patient}</td>
-                          <td className="p-3 text-center text-gray-600">{r.type}</td>
-                          <td className="p-3 text-center text-xs text-gray-500">{r.date}</td>
-                          <td className="p-3 text-center text-xs text-gray-500">{r.size}</td>
-                          <td className="p-3 text-center"><span className="badge-green">✓ Uploaded</span></td>
-                        </tr>
-                      ))}
+                      {statsLoading
+                        ? [...Array(3)].map((_, i) => <SkeletonTableRow key={i} cols={6} />)
+                        : history.length === 0
+                          ? <tr><td colSpan={6} className="text-center text-gray-400 py-8 text-sm">No uploads yet</td></tr>
+                          : history.slice(0, 10).map((r, i) => (
+                            <tr key={i} className="table-row">
+                              <td className="p-3 font-mono text-xs text-primary-600">{r.parchi}</td>
+                              <td className="p-3 font-medium text-gray-800">{r.patient}</td>
+                              <td className="p-3 text-center text-gray-600">{r.type}</td>
+                              <td className="p-3 text-center text-xs text-gray-500">{r.date}</td>
+                              <td className="p-3 text-center text-xs text-gray-500">{r.size}</td>
+                              <td className="p-3 text-center"><span className="badge-green">✓ Uploaded</span></td>
+                            </tr>
+                          ))
+                      }
                     </tbody>
                   </table>
                 </div>

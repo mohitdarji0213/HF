@@ -6,6 +6,7 @@ import Navbar from '../../components/common/Navbar'
 import toast from 'react-hot-toast'
 import { appointmentAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { DEMO_MODE } from '../../utils/demo'
 
 const DEPARTMENTS = ['Orthopedics', 'Cardiology', 'Neurology', 'Pediatrics', 'Gynecology', 'General Medicine']
 const TIME_SLOTS = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM', '03:00 PM', '04:00 PM']
@@ -28,12 +29,15 @@ export default function BookAppointment() {
     setLoading(true)
     try {
       const res = await appointmentAPI.book(form)
-      setBookingId(res.appointmentId || 'APT' + Date.now())
+      setBookingId(res.appointmentId || res.data?._id || 'APT' + Date.now())
       setSubmitted(true)
-    } catch {
-      // mock success for demo
-      setBookingId('APT' + Math.floor(Math.random() * 100000))
-      setSubmitted(true)
+    } catch (err) {
+      if (DEMO_MODE) {
+        setBookingId('APT-DEMO-' + Math.floor(Math.random() * 100000))
+        setSubmitted(true)
+      } else {
+        toast.error(err?.message || 'Appointment booking failed. Please try again.')
+      }
     }
     setLoading(false)
   }

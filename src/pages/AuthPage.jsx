@@ -60,13 +60,6 @@ const ROLE_REDIRECT = {
   lab_assistant: "/lab",
 };
 
-function makeFakeToken(user) {
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = btoa(
-    JSON.stringify({ ...user, exp: Math.floor(Date.now() / 1000) + 86400 * 7 }),
-  );
-  return `${header}.${payload}.fakesig`;
-}
 
 export default function AuthPage({ mode = "login" }) {
   const [isLogin, setIsLogin] = useState(mode === "login");
@@ -123,23 +116,8 @@ export default function AuthPage({ mode = "login" }) {
         navigate(ROLE_REDIRECT[form.role] || "/home");
       }
     } catch (err) {
-      const msg = err?.message || "";
-      // Agar network error hai (backend nahi chala) toh demo mode
-      if (!msg || msg === "Network error") {
-        const fakeUser = {
-          id: Date.now(),
-          name: form.name || "Demo User",
-          email: form.email,
-          role: form.role,
-          department: form.department,
-        };
-        login(makeFakeToken(fakeUser));
-        toast.success("Logged in (demo mode — backend offline)");
-        navigate(ROLE_REDIRECT[form.role] || "/home");
-      } else {
-        // Real server error — dikhao
-        setError(msg);
-      }
+      const msg = err?.message || err?.error || "Something went wrong. Please try again.";
+      setError(msg);
     }
     setLoading(false);
   };

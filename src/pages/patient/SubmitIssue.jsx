@@ -6,6 +6,7 @@ import { sendIssueEmail } from '../../services/emailService'
 import { issueAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
+import { DEMO_MODE } from '../../utils/demo'
 
 const ISSUE_TYPES = ['Medical Concern', 'Staff Behavior', 'Facility Issue', 'Wrong Diagnosis', 'Billing Issue', 'Waiting Time', 'Hygiene', 'Other']
 
@@ -28,15 +29,18 @@ export default function SubmitIssue() {
     setLoading(true)
     try {
       await issueAPI.submit(form)
-      await sendIssueEmail({
+      sendIssueEmail({
         senderName: form.anonymous ? 'Anonymous Patient' : user?.name || 'Patient',
         senderEmail: user?.email || 'noreply@hospital.com',
         ...form,
-      })
+      }).catch(() => {})
       setSubmitted(true)
-    } catch {
-      // show success even if API fails for demo
-      setSubmitted(true)
+    } catch (err) {
+      if (DEMO_MODE) {
+        setSubmitted(true)
+      } else {
+        toast.error(err?.message || 'Issue submission failed. Please try again.')
+      }
     }
     setLoading(false)
   }

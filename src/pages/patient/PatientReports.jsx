@@ -4,21 +4,7 @@ import { FiSearch, FiDownload, FiFileText, FiClock, FiUser, FiEye } from 'react-
 import { MdVerified } from 'react-icons/md'
 import Navbar from '../../components/common/Navbar'
 import { reportAPI } from '../../services/api'
-
-const MOCK_REPORT = {
-  parchiNo: 'P2024-001234',
-  patientName: 'Ramesh Kumar',
-  age: 45, gender: 'Male',
-  doctorName: 'Dr. Rajesh Sharma',
-  department: 'Orthopedics',
-  date: '2024-11-15',
-  diagnosis: 'Knee Ligament Tear - Grade II',
-  reports: [
-    { id: 'r1', name: 'X-Ray Report', type: 'pdf', uploadedAt: '2024-11-15 10:30 AM', size: '2.4 MB', uploadedBy: 'Lab Assistant' },
-    { id: 'r2', name: 'MRI Scan', type: 'pdf', uploadedAt: '2024-11-15 02:15 PM', size: '8.1 MB', uploadedBy: 'Lab Assistant' },
-    { id: 'r3', name: 'Blood Test Report', type: 'pdf', uploadedAt: '2024-11-15 11:00 AM', size: '1.2 MB', uploadedBy: 'Lab Assistant' },
-  ]
-}
+import { DEMO_MODE, DEMO_PARCHI_REPORT } from '../../utils/demo'
 
 export default function PatientReports() {
   const [parchiNo, setParchiNo] = useState('')
@@ -34,15 +20,8 @@ export default function PatientReports() {
       setReport(res)
     } catch (err) {
       const msg = err?.message || ''
-      if (msg.includes('nahi mila') || msg.includes('404') || msg.toLowerCase().includes('not found')) {
-        setError('No report found for this Parchi number. Please check and try again.')
-      } else if (!msg || msg === 'Network error') {
-        // demo mock when backend offline
-        if (parchiNo.toUpperCase().includes('P')) {
-          setReport(MOCK_REPORT)
-        } else {
-          setError('No report found for this Parchi number. Please check and try again.')
-        }
+      if (DEMO_MODE && (!msg || msg === 'Network error')) {
+        setReport(DEMO_PARCHI_REPORT)
       } else {
         setError('No report found for this Parchi number. Please check and try again.')
       }
