@@ -40,11 +40,6 @@ const ROLES = [
     desc: "Hospital operations",
   },
   {
-    value: "district_admin",
-    label: "🏛️ District Admin",
-    desc: "District level oversight",
-  },
-  {
     value: "lab_assistant",
     label: "🧪 Lab Assistant",
     desc: "Upload patient reports",
