@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Clock,
   Building2,
@@ -711,152 +711,91 @@ export default function FindDoctor() {
     setFiltered(d);
   }, [search, dept, availOnly, sortBy, allDoctors]);
 
+  // Detail view
+  if (selected) {
+    return <DetailPage doc={selected} onBack={() => setSelected(null)} />;
+  }
+
+  // List view
   return (
     <div className="min-h-screen bg-hospital-bg">
       <Navbar showMenu={false} />
 
-      <AnimatePresence mode="wait">
-        {selected ? (
-          <DetailPage
-            key="detail"
-            doc={selected}
-            onBack={() => setSelected(null)}
-          />
+      {/* Header */}
+      <div className="page-header text-white text-center px-4 py-8">
+        <h1 className="text-2xl font-bold mb-1">🏥 Find a Doctor</h1>
+        <p className="text-sm opacity-80">
+          Bhartiya Hospital, Churu &nbsp;|&nbsp; OPD: 8 AM – 10 PM
+        </p>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Search & Filters */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 space-y-4 shadow-sm">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, specialty or department..."
+              className="input-field pl-10"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-2 flex-wrap items-center">
+            <span className="flex items-center gap-1 text-xs font-medium text-gray-500 shrink-0">
+              <Filter size={12} /> Department:
+            </span>
+            {DEPARTMENTS.map((d) => (
+              <button
+                key={d}
+                onClick={() => setDept(d)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                  dept === d ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={availOnly} onChange={(e) => setAvailOnly(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+              <span className="text-sm text-gray-600">Available today only</span>
+            </label>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="select-field w-auto text-xs py-2">
+              <option value="rating">Sort: Top Rated</option>
+              <option value="exp">Sort: Most Experienced</option>
+            </select>
+          </div>
+        </div>
+
+        <p className="text-sm font-semibold text-gray-500 mb-4">{filtered.length} doctors found</p>
+
+        {loading ? (
+          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
+            {[...Array(6)].map((_, i) => <SkeletonDoctorCard key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <Search size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="font-medium">No doctors found</p>
+            <p className="text-sm mt-1">Try adjusting filters</p>
+          </div>
         ) : (
-          <motion.div
-            key="list"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Header */}
-            <div className="page-header text-white text-center px-4 py-8">
-              <motion.h1
-                initial={{ opacity: 0, y: -12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="text-2xl font-bold mb-1"
-              >
-                🏥 Find a Doctor
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.12 }}
-                className="text-sm opacity-80"
-              >
-                Bhartiya Hospital, Churu &nbsp;|&nbsp; OPD: 8 AM – 10 PM
-              </motion.p>
-            </div>
-
-            <div className="max-w-5xl mx-auto px-4 py-6">
-              {/* Search & Filters */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 space-y-4 shadow-sm">
-                {/* Search */}
-                <div className="relative">
-                  <Search
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={16}
-                  />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by name, specialty or department..."
-                    className="input-field pl-10"
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Department filter */}
-                <div className="flex gap-2 flex-wrap items-center">
-                  <span className="flex items-center gap-1 text-xs font-medium text-gray-500 shrink-0">
-                    <Filter size={12} /> Department:
-                  </span>
-                  {DEPARTMENTS.map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDept(d)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                        dept === d
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Available toggle + sort */}
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={availOnly}
-                      onChange={(e) => setAvailOnly(e.target.checked)}
-                      className="w-4 h-4 accent-blue-600"
-                    />
-                    <span className="text-sm text-gray-600">
-                      Available today only
-                    </span>
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="select-field w-auto text-xs py-2"
-                  >
-                    <option value="rating">Sort: Top Rated</option>
-                    <option value="exp">Sort: Most Experienced</option>
-                  </select>
-                </div>
-              </div>
-
-              <p className="text-sm font-semibold text-gray-500 mb-4">
-                {filtered.length} doctors found
-              </p>
-
-              {loading ? (
-                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-                  {[...Array(6)].map((_, i) => <SkeletonDoctorCard key={i} />)}
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="text-center py-16 text-gray-400">
-                  <Search size={40} className="mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">No doctors found</p>
-                  <p className="text-sm mt-1">Try adjusting filters</p>
-                </div>
-              ) : (
-                <motion.div
-                  className="grid gap-4"
-                  style={{
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(240px, 1fr))",
-                  }}
-                >
-                  {filtered.map((doc, i) => (
-                    <motion.div
-                      key={doc._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <DoctorCard doc={doc} onView={setSelected} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
+          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
+            {filtered.map((doc) => (
+              <DoctorCard key={doc._id} doc={doc} onView={setSelected} />
+            ))}
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
