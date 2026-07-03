@@ -364,20 +364,16 @@ function InfoRow({ icon, children }) {
 }
 
 // ── Detail Page ────────────────────────────────────────────────────
-function DetailPage({ doc, onBack }) {
-  const navigate = useNavigate();
+function DetailPage({ doc, onBack, onBook }) {
   const [imgErr, setImgErr] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [rating, setRating] = useState(0);
   const [ratingDone, setRatingDone] = useState(false);
 
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   function handleBook() {
-    const params = new URLSearchParams({
-      department: doc.department || '',
-      doctorName: doc.name || '',
-      ...(selectedSlot ? { time: selectedSlot } : {}),
-    });
-    navigate(`/patient/book-appointment?${params.toString()}`);
+    onBook({ department: doc.department, doctorName: doc.name, time: selectedSlot });
   }
 
   async function handleRate(val) {
@@ -391,14 +387,7 @@ function DetailPage({ doc, onBack }) {
   }
 
   return (
-    <motion.div
-      key="detail"
-      initial={{ opacity: 0, x: 60 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 60 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="min-h-screen bg-gray-50"
-    >
+    <div className="min-h-screen bg-gray-50">
       {/* Back bar */}
       <div className="sticky top-0 z-10 bg-white border-b border-blue-100 px-4 py-3 shadow-sm">
         <button
@@ -626,7 +615,7 @@ function DetailPage({ doc, onBack }) {
           </div>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -668,6 +657,7 @@ function Badge({ color, children }) {
 
 // ── Main Page ──────────────────────────────────────────────────────
 export default function FindDoctor() {
+  const navigate = useNavigate();
   const [allDoctors, setAllDoctors] = useState(STATIC_DOCTORS);
   const [filtered, setFiltered] = useState(STATIC_DOCTORS);
   const [loading, setLoading] = useState(true);
@@ -676,6 +666,15 @@ export default function FindDoctor() {
   const [dept, setDept] = useState("All");
   const [availOnly, setAvailOnly] = useState(false);
   const [sortBy, setSortBy] = useState("rating");
+
+  function handleBook({ department, doctorName, time }) {
+    const params = new URLSearchParams({
+      department: department || '',
+      doctorName: doctorName || '',
+      ...(time ? { time } : {}),
+    });
+    navigate(`/patient/book-appointment?${params.toString()}`);
+  }
 
   // Fetch from backend; fallback to static
   useEffect(() => {
@@ -713,7 +712,7 @@ export default function FindDoctor() {
 
   // Detail view
   if (selected) {
-    return <DetailPage doc={selected} onBack={() => setSelected(null)} />;
+    return <DetailPage doc={selected} onBack={() => setSelected(null)} onBook={handleBook} />;
   }
 
   // List view
