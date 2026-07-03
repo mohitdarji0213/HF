@@ -1,4 +1,4 @@
-export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false'
+export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 
 export const DEMO_REPORT_HISTORY = [
   { _id: 'd1', parchiNo: 'P2024-001234', patientName: 'Ramesh Kumar', files: [{ fileType: 'X-Ray', name: 'X-Ray Report', size: '2.4 MB', uploadedAt: '2024-11-15T10:30:00Z' }], createdAt: '2024-11-15T10:30:00Z' },
