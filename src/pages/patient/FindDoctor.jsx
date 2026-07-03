@@ -373,7 +373,7 @@ function DetailPage({ doc, onBack, onBook }) {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   function handleBook() {
-    onBook({ department: doc.department, doctorName: doc.name, time: selectedSlot });
+    onBook({ department: doc.department, doctorName: doc.name, doctorId: doc._id, time: selectedSlot });
   }
 
   async function handleRate(val) {
@@ -667,10 +667,11 @@ export default function FindDoctor() {
   const [availOnly, setAvailOnly] = useState(false);
   const [sortBy, setSortBy] = useState("rating");
 
-  function handleBook({ department, doctorName, time }) {
+  function handleBook({ department, doctorName, doctorId, time }) {
     const params = new URLSearchParams({
       department: department || '',
       doctorName: doctorName || '',
+      ...(doctorId ? { doctorId } : {}),
       ...(time ? { time } : {}),
     });
     navigate(`/patient/book-appointment?${params.toString()}`);

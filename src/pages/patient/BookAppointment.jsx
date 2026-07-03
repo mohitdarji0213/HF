@@ -20,6 +20,7 @@ export default function BookAppointment() {
     age: '', gender: '', phone: user?.phone || '',
     department: searchParams.get('department') || '',
     doctorName: searchParams.get('doctorName') || '',
+    doctorId: searchParams.get('doctorId') || '',
     date: '', time: searchParams.get('time') || '', reason: '', urgent: false
   })
   const [step, setStep] = useState(1)
