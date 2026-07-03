@@ -1,22 +1,26 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiCalendar, FiClock, FiUser, FiPhone, FiCheckCircle } from 'react-icons/fi'
+import { FiCalendar, FiUser, FiPhone, FiCheckCircle } from 'react-icons/fi'
 import { MdLocalHospital } from 'react-icons/md'
 import Navbar from '../../components/common/Navbar'
 import toast from 'react-hot-toast'
 import { appointmentAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { DEMO_MODE } from '../../utils/demo'
+import { useSearchParams } from 'react-router-dom'
 
-const DEPARTMENTS = ['Orthopedics', 'Cardiology', 'Neurology', 'Pediatrics', 'Gynecology', 'General Medicine']
+const DEPARTMENTS = ['Orthopedics', 'Cardiology', 'Neurology', 'Pediatrics', 'Gynecology', 'General Medicine', 'ENT', 'Dermatology', 'Ophthalmology']
 const TIME_SLOTS = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM', '03:00 PM', '04:00 PM']
 
 export default function BookAppointment() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
   const [form, setForm] = useState({
     patientName: user?.name || '',
     age: '', gender: '', phone: user?.phone || '',
-    department: '', doctorId: '', date: '', time: '', reason: '', urgent: false
+    department: searchParams.get('department') || '',
+    doctorName: searchParams.get('doctorName') || '',
+    date: '', time: searchParams.get('time') || '', reason: '', urgent: false
   })
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
@@ -158,8 +162,10 @@ export default function BookAppointment() {
                   <p className="font-semibold text-blue-700 mb-2">Appointment Summary</p>
                   <p><span className="text-gray-500">Patient:</span> <strong>{form.patientName}</strong></p>
                   <p><span className="text-gray-500">Department:</span> <strong>{form.department}</strong></p>
+                  {form.doctorName && <p><span className="text-gray-500">Doctor:</span> <strong>{form.doctorName}</strong></p>}
                   <p><span className="text-gray-500">Date:</span> <strong>{form.date}</strong></p>
                   <p><span className="text-gray-500">Time:</span> <strong>{form.time}</strong></p>
+                  <p className="text-green-700 font-semibold mt-2">✓ Free OPD — No consultation fee</p>
                 </div>
                 <div className="flex justify-between pt-2">
                   <button onClick={() => setStep(2)} className="btn-secondary">← Back</button>

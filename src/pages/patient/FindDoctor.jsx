@@ -8,13 +8,13 @@ import {
   ChevronLeft,
   Star,
   Users,
-  IndianRupee,
   Stethoscope,
   AlertCircle,
   Search,
   Filter,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import { SkeletonDoctorCard } from "../../components/common/Skeleton";
 import { doctorAPI } from "../../services/api";
@@ -30,7 +30,7 @@ const STATIC_DOCTORS = [
     avail: "Mon–Sat · 10 AM – 2 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹200",
+    fee: null,
     rating: 4.9,
     ratingCount: 312,
     patients: "8,400+",
@@ -61,7 +61,7 @@ const STATIC_DOCTORS = [
     avail: "Mon–Fri · 9 AM – 1 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹150",
+    fee: null,
     rating: 4.8,
     ratingCount: 245,
     patients: "6,200+",
@@ -92,7 +92,7 @@ const STATIC_DOCTORS = [
     avail: "Tue, Thu, Sat · 11 AM – 3 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹200",
+    fee: null,
     rating: 4.7,
     ratingCount: 198,
     patients: "5,800+",
@@ -123,7 +123,7 @@ const STATIC_DOCTORS = [
     avail: "Mon–Sat · 9 AM – 12 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹150",
+    fee: null,
     rating: 4.9,
     ratingCount: 280,
     patients: "7,100+",
@@ -155,7 +155,7 @@ const STATIC_DOCTORS = [
     avail: "Mon, Wed, Fri · 10 AM – 2 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹250",
+    fee: null,
     rating: 4.8,
     ratingCount: 176,
     patients: "4,900+",
@@ -180,7 +180,7 @@ const STATIC_DOCTORS = [
     avail: "Tue & Thu · 2 PM – 6 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹200",
+    fee: null,
     rating: 4.7,
     ratingCount: 142,
     patients: "3,600+",
@@ -205,7 +205,7 @@ const STATIC_DOCTORS = [
     avail: "Mon–Sat · 8 AM – 12 PM",
     hospital: " Bhartiya Hospital",
     loc: "Churu, Rajasthan",
-    fee: "₹150",
+    fee: null,
     rating: 4.6,
     ratingCount: 118,
     patients: "3,100+",
@@ -263,7 +263,7 @@ function normaliseDoctor(d) {
       d.avail || d.availability ? "Available Today" : "Check with hospital",
     hospital: d.hospital || " Bhartiya Hospital",
     loc: d.loc || "Churu, Rajasthan",
-    fee: d.fee ? `₹${d.fee}` : "₹150",
+    fee: null,
     rating: d.rating || 4.5,
     ratingCount: d.ratingCount || 0,
     patients: d.patients || `${(d.ratingCount || 0) * 12}+`,
@@ -341,11 +341,7 @@ function DoctorCard({ doc, onView }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-blue-50 bg-blue-50/40">
-        <div className="text-xs text-gray-400">
-          Fee{" "}
-          <span className="text-base font-bold text-gray-800">{doc.fee}</span>
-        </div>
+      <div className="flex items-center justify-end px-4 py-3 border-t border-blue-50 bg-blue-50/40">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onView(doc)}
@@ -369,16 +365,19 @@ function InfoRow({ icon, children }) {
 
 // ── Detail Page ────────────────────────────────────────────────────
 function DetailPage({ doc, onBack }) {
+  const navigate = useNavigate();
   const [imgErr, setImgErr] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [booked, setBooked] = useState(false);
   const [rating, setRating] = useState(0);
   const [ratingDone, setRatingDone] = useState(false);
 
   function handleBook() {
-    if (!selectedSlot) return alert("Please select a time slot first.");
-    setBooked(true);
-    setTimeout(() => setBooked(false), 3000);
+    const params = new URLSearchParams({
+      department: doc.department || '',
+      doctorName: doc.name || '',
+      ...(selectedSlot ? { time: selectedSlot } : {}),
+    });
+    navigate(`/patient/book-appointment?${params.toString()}`);
   }
 
   async function handleRate(val) {
@@ -460,7 +459,7 @@ function DetailPage({ doc, onBack }) {
                   onClick={handleBook}
                   className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
                 >
-                  {booked ? "✓ Appointment Booked!" : "Book Appointment"}
+                  Book Appointment
                 </motion.button>
                 <a
                   href={`tel:${doc.phone}`}
@@ -473,17 +472,12 @@ function DetailPage({ doc, onBack }) {
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 divide-x divide-blue-50 border-t border-blue-50">
+          <div className="grid grid-cols-2 divide-x divide-blue-50 border-t border-blue-50">
             {[
               {
                 icon: <Users size={14} />,
                 label: "Patients",
                 val: doc.patients,
-              },
-              {
-                icon: <IndianRupee size={14} />,
-                label: "Consult Fee",
-                val: doc.fee,
               },
               {
                 icon: <Stethoscope size={14} />,
@@ -821,7 +815,6 @@ export default function FindDoctor() {
                   >
                     <option value="rating">Sort: Top Rated</option>
                     <option value="exp">Sort: Most Experienced</option>
-                    <option value="fee">Sort: Lowest Fee</option>
                   </select>
                 </div>
               </div>
